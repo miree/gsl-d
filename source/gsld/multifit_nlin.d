@@ -246,6 +246,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 		return (f_plus-f_minus)/(2*eps);
 	}
 	
+	static if (isFloatingPoint(C)) 
 	auto result_function_values(C x1, C x2, int n = 1000)
 	{
 		double result[][3];
