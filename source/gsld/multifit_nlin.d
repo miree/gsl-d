@@ -1,9 +1,9 @@
 import std.stdio;
 import std.math;
+import std.traits;
 import gsl.gsl_multifit_nlin;
 import gsl.gsl_vector;
 import gsl.gsl_blas;
-import gsl.gsl_multifit_nlin;
 import gsl.gsl_deriv;
 
 /+ C is coordinate type of data point
@@ -246,7 +246,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 		return (f_plus-f_minus)/(2*eps);
 	}
 	
-	static if (isFloatingPoint(C)) 
+	static if (isFloatingPoint!(C)) 
 	auto result_function_values(C x1, C x2, int n = 1000)
 	{
 		double result[][3];
