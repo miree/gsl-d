@@ -19,7 +19,7 @@
 import std.stdio;
 import std.math;
 import multifit_nlin;
-import multimin;
+//import multimin;
 
 double eval(double x, double f, double s)
 {
