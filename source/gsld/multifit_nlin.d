@@ -265,7 +265,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 					dfunc += result_cov[i][j]*df_di*df_dj;
 				}
 			}
-			result ~= [x,func,dfunc];
+			result ~= [x,func,sqrt(dfunc)];
 		}
 		return result;
 	}
