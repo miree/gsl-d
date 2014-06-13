@@ -174,7 +174,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 		{
 			foreach (i; 0 .. pars.length)
 				writef("%12s",cast(double)gsl_vector_get(s.x, i));
-			writefln("  (%3s)",iter);	
+			writefln("  (%3s)     chi=%s",iter,gsl_blas_dnrm2(s.f));	
 		}	
 		
 		return iter;
@@ -236,12 +236,12 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 	double df_d(ulong i, C x, double params[])
 	{
 		assert(i < params.length);
-		double eps = params[i]*1e-8;
-		double tmp = params[i];
+		real eps = params[i]*1e-8;
+		real tmp = params[i];
 		params[i] += eps;
-		double f_plus = f(x,params);
+		real f_plus = f(x,params);
 		params[i] -= 2*eps;
-		double f_minus = f(x,params);
+		real f_minus = f(x,params);
 		params[i] = tmp;
 		return (f_plus-f_minus)/(2*eps);
 	}
