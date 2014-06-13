@@ -1,5 +1,7 @@
 import std.stdio;
+import std.math;
 import multifit_nlin;
+import multimin;
 
 double eval(double x, double f, double s)
 {
@@ -7,7 +9,6 @@ double eval(double x, double f, double s)
 }
 double funa(double x, double[] ps)
 {
-	//writeln(ps);
 	double result = 0;
 	double pow = 1;
 	foreach(p; ps)
@@ -17,7 +18,7 @@ double funa(double x, double[] ps)
 	}
 	return result;
 }
-void main()
+void multifit_nlin_test()
 {
 	double[6] params = 0.1;
 	
@@ -41,6 +42,29 @@ void main()
 	{
 		writeln(line);
 	}
+}
+//----------------------------------------------------------------------
+
+double min_fun(double x[])
+{
+	double result = 0;
+	foreach(xi;x) result += sin(xi+1)^^2;
+	return result+1;
+}
+void multimin_test()
+{
+	double x_start[] = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
+	auto min = Multimin!(typeof(&min_fun))
+			(&min_fun, x_start);
+	min.run();
+	writeln("min: ", min.x_min);
+}
+
+//----------------------------------------------------------------------
+void main()
+{
+	multifit_nlin_test();
+	multimin_test();
 }
 
 
