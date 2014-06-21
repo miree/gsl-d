@@ -1,25 +1,7 @@
-// Simple example of how to use the wrapper structs.
-// Copyright (C) 2014  Michael Reese
-// 
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// questions & comments: michaelate at gmail.com
-
 import std.stdio;
 import std.math;
 import multifit_nlin;
-//import multimin;
+import multimin;
 
 double eval(double x, double f, double s)
 {
@@ -63,26 +45,26 @@ void multifit_nlin_test()
 }
 //----------------------------------------------------------------------
 
-//double min_fun(double x[])
-//{
-//	double result = 0;
-//	foreach(xi;x) result += sin(xi+1)^^2;
-//	return result+1;
-//}
-//void multimin_test()
-//{
-//	double x_start[] = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
-//	auto min = Multimin!(typeof(&min_fun))
-//			(&min_fun, x_start);
-//	min.run();
-//	writeln("min: ", min.x_min);
-//}
+double min_fun(double x[])
+{
+	double result = 0;
+	foreach(xi;x) result += sin(xi+1)^^2;
+	return result+1;
+}
+void multimin_test()
+{
+	double x_start[] = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
+	auto min = Multimin!(typeof(&min_fun))
+			(&min_fun, x_start);
+	min.run();
+	writeln("min: ", min.x_min);
+}
 
 //----------------------------------------------------------------------
 void main()
 {
 	multifit_nlin_test();
-	//multimin_test();
+	multimin_test();
 }
 
 
