@@ -215,6 +215,10 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 	}
 	void calc_covar()
 	{
+		gsl_matrix *J = gsl_matrix_alloc(data.length, pars.length);
+		gsl_multifit_fdfsolver_jac(s, J);
+		gsl_multifit_covar(J, 0.0, result_covar_gsl);
+		gsl_matrix_free(J);
 		//gsl_multifit_covar(s.J, 0.0, result_covar_gsl);
 	}
 	void calc_chi()
