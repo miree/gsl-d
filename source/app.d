@@ -45,7 +45,7 @@ void multifit_nlin_test()
 }
 //----------------------------------------------------------------------
 
-double min_fun(double x[])
+double min_fun(double[] x)
 {
 	double result = 0;
 	foreach(xi;x) result += sin(xi+1)^^2;
@@ -53,7 +53,7 @@ double min_fun(double x[])
 }
 void multimin_test()
 {
-	double x_start[] = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
+	double[] x_start = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
 	auto min = Multimin!(typeof(&min_fun))
 			(&min_fun, x_start);
 	min.run();

@@ -19,10 +19,13 @@
 import std.stdio;
 import std.math;
 import std.traits;
-import gsl.gsl_multifit_nlin;
-import gsl.gsl_vector;
-import gsl.gsl_blas;
-import gsl.gsl_deriv;
+import gsl.multifit;
+import gsl.vector;
+import gsl.matrix;
+import gsl.blas;
+import gsl.deriv;
+import gsl.errno;
+import gsl.math;
 
 /+ C is coordinate type of data point
  + Data points alwas have coordinate (c), value (v) and uncertainty called sigma (s).
@@ -46,11 +49,11 @@ struct Fs(C,F,E)
 	double h = 1e-10;	// step size during derivative calculation
 };
 
-struct LenPtr(T) { typeof(T[0].length) len; T* ptr; }
-union Conv(T) {	LenPtr!T lenptr; T array[]; }
+struct LenPtr(T) { typeof(T[0].length) len; const(T)* ptr; }
+union Conv(T) {	LenPtr!T lenptr; T[] array; }
 Conv!double conv_global;
 // convert gsl_vector to D array
-double[] conv(gsl_vector *x)
+double[] conv(const(gsl_vector) *x)
 {
 	conv_global.lenptr.len = x.size;
 	conv_global.lenptr.ptr = gsl_vector_const_ptr(x,0);
@@ -58,10 +61,10 @@ double[] conv(gsl_vector *x)
 }
 
 // function for the gsl
-extern(C) int fit_f_pp(C,F,E) (gsl_vector *x, void *params, gsl_vector *f)
+extern(C) int fit_f_pp(C,F,E) (const(gsl_vector) *x, void *params, gsl_vector *f)
 {
 	auto fs = cast(Fs!(C,F,E) *) params;
-	double ps[] = conv(x);
+	double[] ps = conv(x);
 
 	foreach(i, ref d; fs.data)
 		gsl_vector_set(f, i, fs.eval(fs.f(d.c, ps), d.v, d.s));
@@ -77,7 +80,7 @@ struct Ds(C,F,E) // drivative structure
 	F f;						// function
 	E eval;	    				// evaluation function
 	Dp!C   *dp;					// coordintate
-	double ps[];            	// parameter array
+	double[] ps;            	// parameter array
 	uint n; 					// the n-th parameter will be modified
 };
 
@@ -93,10 +96,10 @@ extern(C) double deriv_f(C,F,E)(double x, void *p)
 	return v;
 }
 
-extern(C) int fit_df_pp(C,F,E)(gsl_vector *x, void *params, gsl_matrix *J)
+extern(C) int fit_df_pp(C,F,E)(const(gsl_vector) *x, void *params, gsl_matrix *J)
 {
 	auto fs = cast(Fs!(C,F,E)*) params;
-	double ps[] = conv(x);
+	double[] ps = conv(x);
 	Ds!(C,F,E) ds = {fs.f, fs.eval, null, ps, 0};
 	
 	foreach(m, ref data; fs.data)
@@ -115,7 +118,7 @@ extern(C) int fit_df_pp(C,F,E)(gsl_vector *x, void *params, gsl_matrix *J)
 	return GSL_SUCCESS;
 }
 
-extern(C) int fit_fdf_pp(C,F,E)(gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J)
+extern(C) int fit_fdf_pp(C,F,E)(const(gsl_vector) *x, void *params, gsl_vector *f, gsl_matrix *J)
 {
 	if (fit_f_pp!(C,F,E)(x,params,f) == GSL_SUCCESS &&
 		fit_df_pp!(C,F,E)(x,params,J) == GSL_SUCCESS)
@@ -212,7 +215,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 	}
 	void calc_covar()
 	{
-		gsl_multifit_covar(s.J, 0.0, result_covar_gsl);
+		//gsl_multifit_covar(s.J, 0.0, result_covar_gsl);
 	}
 	void calc_chi()
 	{
@@ -251,7 +254,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 	}
 	
 	// derivative of f with respect to parameter i at coordinate 
-	double df_d(ulong i, C x, double params[])
+	double df_d(ulong i, C x, double[] params)
 	{
 		assert(i < params.length);
 		real eps = params[i]*1e-8;
@@ -267,7 +270,7 @@ struct MultifitNlin(C,F,E=typeof(&residues))
 	static if (isFloatingPoint!(C)) 
 	auto result_function_values(C x1, C x2, int n = 1000)
 	{
-		double result[][3];
+		double[3][] result;
 		auto result_par = result_params();
 		auto result_cov = result_covar();
 		for (C x = x1; x <= x2; x+=(x2-x1)/n)

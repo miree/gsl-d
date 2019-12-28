@@ -1,8 +1,10 @@
 import std.stdio;
 import std.math;
-import gsl.gsl_multimin;
-import gsl.gsl_vector;
-import gsl.gsl_deriv;
+import gsl.multimin;
+import gsl.vector;
+import gsl.deriv;
+import gsl.math;
+import gsl.errno;
 
 /+ F function to minimize
  +/
@@ -12,11 +14,12 @@ struct Fs(F)
 	double h;	// step size during derivative calculation
 }
 
-struct LenPtr(T) { typeof(T[0].length) len; T* ptr; }
-union Conv(T) {	LenPtr!T lenptr; T array[]; }
+
+struct LenPtr(T) { typeof(T[0].length) len; const(T)* ptr; }
+union Conv(T) {	LenPtr!T lenptr; T[] array; }
 Conv!double conv_global;
 // convert gsl_vector to D array
-double[] conv(gsl_vector *x)
+double[] conv(const(gsl_vector) *x)
 {
 	conv_global.lenptr.len = x.size;
 	conv_global.lenptr.ptr = gsl_vector_const_ptr(x,0);
@@ -24,10 +27,10 @@ double[] conv(gsl_vector *x)
 }
 
 // function for the gsl
-extern(C) double min_f_pp(F) (gsl_vector *x, void *params)
+extern(C) double min_f_pp(F) (const(gsl_vector) *x, void *params)
 {
 	auto fs = cast(Fs!F *) params;
-	double xval[] = conv(x);
+	double[] xval = conv(x);
 	return fs.f(xval);
 }
 
@@ -36,7 +39,7 @@ extern(C) double min_f_pp(F) (gsl_vector *x, void *params)
 struct Dms(F) // drivative structure
 {
 	F f;						// function
-	double xval[];            	// parameter array
+	double[] xval;            	// parameter array
 	uint n; 					// the n-th parameter will be modified
 };
 
@@ -51,10 +54,10 @@ extern(C) double min_deriv_f(F)(double x, void *p)
 	return f;
 }
 
-extern(C) void min_df_pp(F)(gsl_vector *x, void *params, gsl_vector *g)
+extern(C) void min_df_pp(F)(const(gsl_vector) *x, void *params, gsl_vector *g)
 {
 	auto fs = cast(Fs!F *) params;
-	double xval[] = conv(x);
+	double[] xval = conv(x);
 	Dms!(F) ds = {fs.f, xval, 0};
 	
 	foreach(i, xi; xval)
@@ -68,7 +71,7 @@ extern(C) void min_df_pp(F)(gsl_vector *x, void *params, gsl_vector *g)
 	}
 }
 
-extern(C) void min_fdf_pp(F)(gsl_vector *x, void *params, double *f, gsl_vector *g)
+extern(C) void min_fdf_pp(F)(const(gsl_vector) *x, void *params, double *f, gsl_vector *g)
 {
 	*f = min_f_pp!F(x,params);
 	min_df_pp!F(x,params,g);
@@ -81,7 +84,7 @@ struct Multimin(F)
 	gsl_multimin_fdfminimizer *s;
 	gsl_vector *x;
 	ulong n;
-	this(F f, double x_start[], double stepsize = 0.01, double tolerance = 1e-4, double hstep = 1e-10)
+	this(F f, double[] x_start, double stepsize = 0.01, double tolerance = 1e-4, double hstep = 1e-10)
 	{
 		this.n = x_start.length;
 		this.fs = Fs!F(f,hstep);
